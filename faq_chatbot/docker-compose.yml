@@ -1,0 +1,13 @@
+services:
+  faq-chatbot:
+    build: .
+    ports:
+      - "5050:5000"
+    volumes:
+      - ./config.yaml:/app/config.yaml
+      - ./samples:/app/samples
+    environment:
+      - OLLAMA_HOST=http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

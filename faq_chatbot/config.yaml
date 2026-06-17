@@ -1,0 +1,24 @@
+ollama:
+  host: http://host.docker.internal:11434
+  model: gemma4:12b
+  embedding_model: nomic-embed-text
+
+generation:
+  temperature: 0.1
+  top_p: 0.9
+  max_tokens: 2048
+  repeat_penalty: 1.1
+
+chunking:
+  chunk_size: 500
+  chunk_overlap: 50
+  top_k: 4
+
+limits:
+  max_upload_mb: 2
+  max_paste_lines: 10000
+
+sample:
+  path: /app/samples/policy/HR_Policy_Manual.pdf
+  description: "A detailed, 270-page manual covering all employee regulations and governance."
+  url: "https://www.iima.ac.in/sites/default/files/2023-01/HR%20Policy%20Manual%202023%20%288%29.pdf"

@@ -1,0 +1,10 @@
+{
+  "username": "demo",
+  "password": "Oo&6Kjl1Bh",
+  "apps": [
+    {
+      "display": "faq_chatbot",
+      "internal_url": "http://localhost:5050"
+    }
+  ]
+}

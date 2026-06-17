@@ -1,19 +1,37 @@
 {
   "company_name": "Blooms.ai",
-  "tagline": "Solving legacy problems with next-gen AI-based solutions",
-  "description": "An AI-first company focused on modernizing legacy enterprise systems. We specialize in engineering operational efficiencies, delivering deep business benefits, and establishing bulletproof AI technology and ethical guardrails to heavily mitigate deployment risks.",
+  "tagline": "Modernizing enterprise systems with responsible AI",
+  "description": "Blooms.ai is an AI-first company dedicated to modernizing legacy enterprise systems. We combine deep technical expertise with a pragmatic, results-driven approach to deliver measurable operational efficiencies, unlock new revenue streams, and reduce risk.<br><br>Our team specializes in engineering bulletproof AI solutions with robust ethical guardrails, ensuring every deployment is both powerful and responsible. From strategy to production, we partner with organizations to navigate the complexities of AI adoption with confidence.",
+  "hero_image": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80",
+  "about_image": "https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&w=800&q=80",
   "contact": {
-    "email": "info@blooms.ai",
-    "phone": "+1-555-0199",
-    "website": "http://localhost:8080"
+    "email": "info@bloomsmobility.com",
+    "phone": "+91-8310747798"
   },
   "services": [
-    { "title": "AI Consulting & Transformation", "desc": "Strategic mapping to integrate AI into your core business mechanics safely." },
-    { "title": "AI Development", "desc": "Custom building and fine-tuning next-gen LLMs, agents, and computer vision architectures." },
-    { "title": "AI Quality Assurance", "desc": "Rigorous testing of AI outputs, alignment verification, and ethical guardrail engineering." }
+    {
+      "title": "AI Consulting & Transformation",
+      "desc": "We partner with leadership teams to architect AI strategies aligned with business objectives. From opportunity identification and feasibility assessment to roadmap execution and change management, our consultants bring deep technical expertise and industry knowledge to every engagement.",
+      "icon": "strategy"
+    },
+    {
+      "title": "AI Development",
+      "desc": "Our engineers build custom AI solutions tailored to your unique challenges. We specialize in fine-tuning large language models, developing autonomous agent systems, deploying computer vision pipelines at scale, and creating bespoke ML architectures that integrate seamlessly with existing infrastructure.",
+      "icon": "code"
+    },
+    {
+      "title": "AI Quality Assurance",
+      "desc": "We ensure AI systems are reliable, fair, and transparent through rigorous testing frameworks. Our QA methodology covers alignment verification, bias detection and mitigation, performance benchmarking under edge cases, adversarial robustness testing, and ongoing compliance monitoring.",
+      "icon": "shield"
+    }
   ],
   "social_links": {
     "github": "#",
     "linkedin": "#"
+  },
+  "demo": {
+    "url": "/blooms/demo",
+    "username": "demo",
+    "password": "Oo&6Kjl1Bh"
   }
 }

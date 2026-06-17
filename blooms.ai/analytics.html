@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analytics &middot; Blooms.ai</title>
+<style>
+:root {
+  --bg: #f5f5f8; --card: #fff; --text: #1a1a2e; --muted: #888;
+  --accent: #7c3aed; --border: #e5e5ea; --green: #10b981;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg); color: var(--text); padding: 32px 24px; line-height:1.5;
+}
+h1 { font-size:1.3rem; font-weight:700; margin-bottom:24px; color:var(--accent); }
+.dashboard { max-width:960px; margin:0 auto; }
+.stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px; margin-bottom:28px; }
+.stat-card {
+  background:var(--card); border-radius:10px; padding:20px; border:1px solid var(--border);
+  text-align:center;
+}
+.stat-card .num { font-size:1.8rem; font-weight:700; color:var(--accent); }
+.stat-card .label { font-size:0.8rem; color:var(--muted); margin-top:4px; }
+h2 { font-size:1rem; font-weight:600; margin-bottom:12px; color:var(--text); }
+.section { background:var(--card); border-radius:10px; padding:20px; border:1px solid var(--border); margin-bottom:20px; }
+table { width:100%; border-collapse:collapse; font-size:0.88rem; }
+th { text-align:left; color:var(--muted); font-weight:500; padding:6px 8px; border-bottom:1px solid var(--border); }
+td { padding:6px 8px; border-bottom:1px solid var(--border); }
+.bar-wrap { display:flex; align-items:center; gap:8px; }
+.bar { height:18px; border-radius:4px; background:var(--accent); opacity:0.7; min-width:2px; transition:width 0.4s; }
+.bar-val { font-size:0.8rem; color:var(--muted); white-space:nowrap; width:32px; text-align:right; }
+.timeline { display:flex; align-items:flex-end; gap:2px; height:80px; padding:4px 0; }
+.timeline-bar { flex:1; border-radius:2px 2px 0 0; background:var(--accent); opacity:0.6; min-height:2px; transition:height 0.4s; position:relative; }
+.timeline-bar:hover { opacity:1; }
+.timeline-label { font-size:0.6rem; color:var(--muted); text-align:center; margin-top:4px; }
+.loading { color:var(--muted); text-align:center; padding:40px; }
+.error { color:#ef4444; text-align:center; padding:40px; }
+</style>
+</head>
+<body>
+<div class="dashboard">
+  <h1>&#9679; Analytics</h1>
+  <div class="stats" id="stats"></div>
+  <div class="section"><h2>Traffic (last 24h)</h2><div class="timeline" id="timeline"></div></div>
+  <div class="section"><h2>Pages</h2><div id="pages"></div></div>
+  <div class="section"><h2>Referrers</h2><div id="referrers"></div></div>
+</div>
+<script>
+async function load() {
+  try {
+    const r = await fetch('api/analytics/data');
+    const d = await r.json();
+    document.getElementById('stats').innerHTML = `
+      <div class="stat-card"><div class="num">${d.total}</div><div class="label">All time</div></div>
+      <div class="stat-card"><div class="num">${d.last24h}</div><div class="label">Last 24h</div></div>
+      <div class="stat-card"><div class="num">${d.last7d}</div><div class="label">Last 7 days</div></div>
+      <div class="stat-card"><div class="num">${d.pages.length}</div><div class="label">Unique pages</div></div>
+    `;
+    const maxT = Math.max(...d.timeline.map(e=>e[1]), 1);
+    document.getElementById('timeline').innerHTML = d.timeline.map(e => {
+      const h = Math.max(2, (e[1] / maxT) * 76);
+      const label = e[0].slice(11, 16);
+      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;"><div class="timeline-bar" style="height:${h}px" title="${e[0]}: ${e[1]}"></div><div class="timeline-label">${label}</div></div>`;
+    }).join('') || '<div style="color:var(--muted)">No data</div>';
+    const maxP = Math.max(...d.pages.map(e=>e[1]), 1);
+    document.getElementById('pages').innerHTML = d.pages.length ? `<table><tr><th>Page</th><th></th><th>Views</th></tr>${d.pages.map(e => {
+      const pct = (e[1] / maxP) * 100;
+      const name = e[0] === '/index.html' ? '/' : e[0];
+      return `<tr><td style="max-width:300px;overflow:hidden;text-overflow:ellipsis">${name}</td><td style="width:100%"><div class="bar-wrap"><div class="bar" style="width:${pct}%"></div><span class="bar-val">${e[1]}</span></div></td></tr>`;
+    }).join('')}</table>` : '<div style="color:var(--muted)">No data</div>';
+    document.getElementById('referrers').innerHTML = d.referrers.length ? `<table><tr><th>Source</th><th></th><th>Visits</th></tr>${d.referrers.map(e => {
+      const maxR = Math.max(...d.referrers.map(x=>x[1]), 1);
+      const pct = (e[1] / maxR) * 100;
+      return `<tr><td>${e[0]}</td><td style="width:100%"><div class="bar-wrap"><div class="bar" style="width:${pct}%"></div><span class="bar-val">${e[1]}</span></div></td></tr>`;
+    }).join('')}</table>` : '<div style="color:var(--muted)">No referrer data yet</div>';
+  } catch(e) {
+    document.querySelector('.dashboard').innerHTML = '<div class="error">Failed to load analytics data</div>';
+  }
+}
+load();
+</script>
+</body>
+</html>
