@@ -1,0 +1,19 @@
+{
+  "company_name": "Blooms.ai",
+  "tagline": "Solving legacy problems with next-gen AI-based solutions",
+  "description": "An AI-first company focused on modernizing legacy enterprise systems. We specialize in engineering operational efficiencies, delivering deep business benefits, and establishing bulletproof AI technology and ethical guardrails to heavily mitigate deployment risks.",
+  "contact": {
+    "email": "info@blooms.ai",
+    "phone": "+1-555-0199",
+    "website": "http://localhost:8080"
+  },
+  "services": [
+    { "title": "AI Consulting & Transformation", "desc": "Strategic mapping to integrate AI into your core business mechanics safely." },
+    { "title": "AI Development", "desc": "Custom building and fine-tuning next-gen LLMs, agents, and computer vision architectures." },
+    { "title": "AI Quality Assurance", "desc": "Rigorous testing of AI outputs, alignment verification, and ethical guardrail engineering." }
+  ],
+  "social_links": {
+    "github": "#",
+    "linkedin": "#"
+  }
+}
