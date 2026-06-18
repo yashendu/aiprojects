@@ -5,6 +5,10 @@
     {
       "display": "faq_chatbot",
       "internal_url": "http://localhost:5050"
+    },
+    {
+      "display": "Model_Benchmark",
+      "internal_url": "http://localhost:5052"
     }
   ]
 }

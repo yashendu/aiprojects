@@ -1,6 +1,6 @@
 ollama:
   host: http://host.docker.internal:11434
-  model: gemma4:12b
+  model: llama3.2:3b
   embedding_model: nomic-embed-text
 
 generation:
@@ -20,5 +20,6 @@ limits:
 
 sample:
   path: /app/samples/policy/HR_Policy_Manual.pdf
+  precomputed: /app/samples/policy/sample_embeddings.pkl
   description: "A detailed, 270-page manual covering all employee regulations and governance."
   url: "https://www.iima.ac.in/sites/default/files/2023-01/HR%20Policy%20Manual%202023%20%288%29.pdf"

@@ -110,7 +110,7 @@ function getInternalUrl(config, displayName) {
 function serveDemoList(res, config) {
   const apps = (config && config.apps) || [];
   const cards = apps.map(a => `
-    <a href="${a.display}" class="demo-card">
+      <a href="${a.display}/" class="demo-card">
       <h3>${a.display}</h3>
       <span class="demo-link">Open &rarr;</span>
     </a>
@@ -209,6 +209,14 @@ http.createServer(async (req, res) => {
     const parts = url.slice(6).split('/'); // after "/demo/"
     const displayName = decodeURIComponent(parts[0]);
     const restPath = '/' + parts.slice(1).join('/');
+
+    // Redirect bare demo names (no sub-path, no trailing slash) so relative URLs resolve correctly
+    // The /blooms prefix matches nginx's location block — kept in sync manually
+    if (restPath === '/' && !req.url.endsWith('/')) {
+      res.writeHead(302, { 'Location': '/blooms' + req.url + '/' });
+      res.end();
+      return;
+    }
 
     const internalUrl = getInternalUrl(config, displayName);
     if (!internalUrl) {

@@ -1,9 +1,8 @@
 import os
-import re
 import requests
 from flask import Flask, request, jsonify, render_template, session
 from app.document_loader import load_document, supported_extensions
-from app.rag_engine import index_document, query_document, clear_document, load_config
+from app.rag_engine import index_document, query_document, clear_document, load_config, load_precomputed, index_precomputed
 from app.session_manager import sessions
 
 app = Flask(__name__)
@@ -12,7 +11,8 @@ app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024
 
 CONFIG = load_config()
 SAMPLE_PATH = CONFIG['sample']['path']
-SAMPLE_DESC = CONFIG['sample']['description']
+SAMPLE_URL = CONFIG['sample'].get('url', '')
+PRECOMPUTED_PATH = CONFIG['sample'].get('precomputed')
 
 GEN_CFG = CONFIG['generation']
 OLLAMA_HOST = CONFIG['ollama']['host']
@@ -75,38 +75,35 @@ def get_suggestions(context):
 @app.route('/')
 def index():
     return render_template('index.html',
-                           sample_available=os.path.exists(SAMPLE_PATH),
-                           sample_description=SAMPLE_DESC,
                            max_lines=CONFIG['limits']['max_paste_lines'])
+
+
+def auto_load_sample(sid):
+    if not PRECOMPUTED_PATH or not os.path.exists(PRECOMPUTED_PATH):
+        return False, []
+    if not os.path.exists(SAMPLE_PATH):
+        return False, []
+    try:
+        precomputed = load_precomputed(PRECOMPUTED_PATH)
+        n = index_precomputed(sid, precomputed, CONFIG)
+        sessions.set_document(sid, os.path.basename(SAMPLE_PATH))
+        url_part = f" You can also download and read the document at {SAMPLE_URL}" if SAMPLE_URL else ""
+        msg = f"For demo purpose: A sample HR policy loaded ({n} sections indexed). Ask me anything about it.{url_part}"
+        sessions.add_message(sid, 'assistant', msg)
+        faqs = precomputed.get('faqs', [])
+        return True, faqs
+    except Exception:
+        return False, []
 
 
 @app.route('/api/start', methods=['POST'])
 def start_session():
     sid = sessions.create()
     session['sid'] = sid
-    greeting = "Hello! I'm your document assistant. Please upload a document, paste text, or try the sample document so I can help answer your questions."
+    greeting = "Hello! I'm your document assistant."
     sessions.add_message(sid, 'assistant', greeting)
-    return jsonify({'session_id': sid, 'messages': [{'role': 'assistant', 'text': greeting}]})
-
-
-@app.route('/api/load_sample', methods=['POST'])
-def load_sample():
-    sid = session.get('sid')
-    if not sid or not sessions.get(sid):
-        return jsonify({'error': 'No session'}), 400
-
-    if not os.path.exists(SAMPLE_PATH):
-        return jsonify({'error': 'Sample file not found. Please upload or paste text instead.'}), 400
-
-    try:
-        text = load_document(SAMPLE_PATH)
-        n = index_document(text, sid, CONFIG)
-        sessions.set_document(sid, os.path.basename(SAMPLE_PATH))
-        sessions.add_message(sid, 'assistant', f"Sample document loaded ({n} sections indexed). You can now ask questions about it.")
-        history = sessions.get_history(sid)
-        return jsonify({'message': f'Document indexed: {n} sections', 'messages': history})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    _, faqs = auto_load_sample(sid)
+    return jsonify({'session_id': sid, 'messages': sessions.get_history(sid), 'suggestions': faqs})
 
 
 @app.route('/api/upload', methods=['POST'])
@@ -138,11 +135,16 @@ def upload():
         text = load_document(tmp)
         if not text.strip():
             raise ValueError('File appears to be empty or unreadable.')
+        clear_document(sid)
+        sessions.clear(sid)
+        sid = sessions.create()
+        session['sid'] = sid
         n = index_document(text, sid, CONFIG)
         sessions.set_document(sid, file.filename)
-        sessions.add_message(sid, 'assistant', f'Document "{file.filename}" loaded ({n} sections indexed). You can now ask questions.')
-        history = sessions.get_history(sid)
-        return jsonify({'message': f'Document indexed: {n} sections', 'messages': history})
+        msg = f'Document "{file.filename}" loaded ({n} sections indexed). You can now ask questions.'
+        sessions.add_message(sid, 'assistant', msg)
+        suggestions = get_suggestions(text)
+        return jsonify({'message': f'Document indexed: {n} sections', 'messages': sessions.get_history(sid), 'suggestions': suggestions})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     finally:
@@ -170,11 +172,16 @@ def paste():
         return jsonify({'error': 'Empty text provided.'}), 400
 
     try:
+        clear_document(sid)
+        sessions.clear(sid)
+        sid = sessions.create()
+        session['sid'] = sid
         n = index_document(text, sid, CONFIG)
         sessions.set_document(sid, 'pasted_text.txt')
-        sessions.add_message(sid, 'assistant', f'Pasted text loaded ({n} sections indexed). You can now ask questions.')
-        history = sessions.get_history(sid)
-        return jsonify({'message': f'Text indexed: {n} sections', 'messages': history})
+        msg = f'Pasted text loaded ({n} sections indexed). You can now ask questions.'
+        sessions.add_message(sid, 'assistant', msg)
+        suggestions = get_suggestions(text)
+        return jsonify({'message': f'Text indexed: {n} sections', 'messages': sessions.get_history(sid), 'suggestions': suggestions})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -197,7 +204,7 @@ def chat():
 
     chunks = query_document(question, sid, CONFIG)
     if not chunks:
-        response = "I don't have any document loaded yet. Please upload a document, paste text, or load the sample to get started."
+        response = "I don't have any document loaded yet. Please upload a document or paste text to get started."
         sessions.add_message(sid, 'assistant', response)
         history = sessions.get_history(sid)
         return jsonify({'response': response, 'messages': history})
@@ -232,6 +239,7 @@ def restart():
         sessions.clear(old_sid)
     sid = sessions.create()
     session['sid'] = sid
-    greeting = "Hello! I'm your document assistant. Please upload a document, paste text, or try the sample document so I can help answer your questions."
+    greeting = "Hello! I'm your document assistant."
     sessions.add_message(sid, 'assistant', greeting)
-    return jsonify({'session_id': sid, 'messages': [{'role': 'assistant', 'text': greeting}]})
+    _, faqs = auto_load_sample(sid)
+    return jsonify({'session_id': sid, 'messages': sessions.get_history(sid), 'suggestions': faqs})

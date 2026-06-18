@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Model Benchmark &middot; Blooms.ai</title>
+<style>
+:root {
+  --bg: #f5f5f8; --card: #fff; --text: #1a1a2e; --secondary: #555;
+  --muted: #888; --accent: #7c3aed; --accent-hover: #6d28d9;
+  --accent-light: rgba(124,58,237,0.1); --border: #e8e8ee;
+  --green: #10b981; --yellow: #f59e0b; --red: #ef4444;
+  --green-bg: #ecfdf5; --yellow-bg: #fffbeb; --red-bg: #fef2f2;
+  --radius: 10px; --shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+[data-theme="dark"] {
+  --bg: #0f0f1a; --card: #1a1a2e; --text: #e4e4ed; --secondary: #a0a0b8;
+  --muted: #6b6b82; --accent: #a78bfa; --accent-hover: #8b6ff5;
+  --accent-light: rgba(167,139,250,0.12); --border: #2a2a40;
+  --green: #34d399; --yellow: #fbbf24; --red: #f87171;
+  --green-bg: rgba(52,211,153,0.12); --yellow-bg: rgba(251,191,36,0.12); --red-bg: rgba(248,113,113,0.12);
+  --shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+.theme-btn{background:none;border:1px solid var(--border);border-radius:8px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--secondary);transition:all .2s;font-size:1rem;}
+.theme-btn:hover{background:var(--accent-light);color:var(--accent);border-color:var(--accent);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif;
+  background:var(--bg);color:var(--text);line-height:1.5;padding:0;min-height:100vh;
+}
+.header{
+  background:var(--card);border-bottom:1px solid var(--border);
+  padding:16px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
+}
+.header h1{font-size:1.15rem;font-weight:700;color:var(--accent);display:flex;align-items:center;gap:8px;}
+.header h1 svg{width:24px;height:24px;}
+.header-actions{display:flex;gap:8px;align-items:center;}
+.btn{
+  background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 20px;
+  font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;
+}
+.btn:hover{background:var(--accent-hover);}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.btn-outline{background:transparent;color:var(--secondary);border:1px solid var(--border);}
+.btn-outline:hover{background:var(--accent-light);color:var(--accent);border-color:var(--accent);}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.status-bar{
+  padding:8px 24px;font-size:.78rem;color:var(--muted);
+  background:var(--card);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;
+}
+.status-bar .dot{width:6px;height:6px;border-radius:50%;background:var(--muted);}
+.status-bar.ready .dot{background:var(--green);}
+.status-bar.busy .dot{background:var(--yellow);animation:pulse 1s infinite;}
+.status-bar.error .dot{background:var(--red);}
+@keyframes pulse{0%,100%{opacity:.4;}50%{opacity:1;}}
+.layout{display:flex;gap:0;min-height:calc(100vh - 110px);}
+.sidebar{width:240px;flex-shrink:0;background:var(--card);border-right:1px solid var(--border);padding:16px 0;overflow-y:auto;}
+.sidebar h3{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:0 20px 8px;}
+.sidebar-item{
+  padding:8px 20px;font-size:.82rem;color:var(--secondary);cursor:pointer;
+  border-left:3px solid transparent;transition:all .15s;text-decoration:none;display:block;
+}
+.sidebar-item:hover{background:var(--accent-light);color:var(--accent);}
+.sidebar-item.active{border-left-color:var(--accent);color:var(--accent);font-weight:600;background:var(--accent-light);}
+.sidebar-item .date{font-size:.72rem;color:var(--muted);font-weight:400;}
+.main{flex:1;padding:24px;overflow-y:auto;min-width:0;}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:60%;color:var(--muted);text-align:center;gap:8px;}
+.empty-state .icon{font-size:2.5rem;opacity:.4;}
+.model-tag{
+  display:inline-flex;align-items:center;gap:4px;
+  background:var(--accent-light);border-radius:6px;padding:3px 10px;
+  font-size:.73rem;color:var(--accent);font-weight:500;white-space:nowrap;
+}
+.app-tag{
+  display:inline-flex;align-items:center;gap:4px;
+  background:#e8f5e9;border-radius:6px;padding:3px 10px;
+  font-size:.73rem;color:#2e7d32;font-weight:500;white-space:nowrap;
+}
+.dashboard-grid{display:grid;gap:20px;}
+
+/* Matrix table */
+.matrix-wrap{overflow-x:auto;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);}
+.matrix{width:100%;border-collapse:collapse;font-size:.82rem;}
+.matrix th{text-align:left;padding:12px 14px;font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);border-bottom:2px solid var(--border);white-space:nowrap;}
+.matrix th:first-child{padding-left:16px;}
+.matrix td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.matrix tr:last-child td{border-bottom:none;}
+.matrix .model-cell{font-weight:600;display:flex;align-items:center;gap:8px;}
+.matrix .overall-cell{font-weight:700;font-size:.95rem;}
+.score-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:36px;height:28px;border-radius:6px;font-weight:700;font-size:.85rem;
+  padding:0 8px;
+}
+.score-5,.score-4{background:var(--green-bg);color:var(--green);}
+.score-3{background:var(--yellow-bg);color:var(--yellow);}
+.score-2,.score-1{background:var(--red-bg);color:var(--red);}
+
+/* Info cards */
+.info-section{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:20px;}
+.info-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+.info-card h3{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);margin-bottom:8px;}
+.info-card .value{font-size:1.2rem;font-weight:700;}
+.model-list{display:flex;flex-wrap:wrap;gap:6px;}
+
+/* Detail toggle */
+.detail-row{display:none;}
+.detail-row.visible{display:table-row;}
+.detail-cell{padding:8px 16px 16px 52px;background:var(--bg);}
+.detail-inner{font-size:.78rem;color:var(--secondary);display:grid;gap:4px;}
+.detail-inner .q-item{padding:4px 0;border-bottom:1px solid var(--border);}
+.detail-inner .q-item:last-child{border:none;}
+.detail-inner .q-text{font-weight:600;color:var(--text);}
+.detail-inner .q-reason{color:var(--muted);font-size:.75rem;}
+.expander{cursor:pointer;color:var(--accent);font-size:.75rem;user-select:none;}
+
+@media(max-width:768px){
+  .layout{flex-direction:column;}
+  .sidebar{width:100%;border-right:none;border-bottom:1px solid var(--border);padding:8px 0;max-height:120px;}
+  .sidebar-item{padding:6px 16px;}
+  .main{padding:16px;}
+  .header{padding:12px 16px;}
+  .info-section{grid-template-columns:1fr;}
+  .matrix td,.matrix th{padding:8px 10px;}
+}
+@media print {
+  body{background:#fff;color:#000;font-size:11px;}
+  .sidebar,.status-bar,.header-actions .btn,.header-actions .theme-btn,.header-actions span,#btn-run{display:none!important;}
+  .layout{display:block!important;min-height:auto!important;}
+  .sidebar{display:none!important;}
+  .main{padding:20px!important;overflow:visible!important;}
+  .header{padding:12px 20px!important;border-bottom:1px solid #ccc!important;}
+  .header h1{color:#000!important;}
+  .matrix-wrap{border:1px solid #ccc!important;border-radius:4px!important;overflow:visible!important;}
+  .matrix{font-size:10px!important;}
+  .matrix th{color:#333!important;border-bottom-color:#ccc!important;}
+  .matrix td,.matrix th{padding:6px 10px!important;}
+  .score-badge{border:1px solid #ccc!important;}
+  .score-5,.score-4{background:#e8f5e9!important;color:#2e7d32!important;}
+  .score-3{background:#fff8e1!important;color:#f57f17!important;}
+  .score-2,.score-1{background:#fef2f2!important;color:#c62828!important;}
+  .detail-row{display:table-row!important;}
+  .detail-cell{background:#fafafa!important;padding:6px 12px!important;}
+  .info-section{break-inside:avoid!important;}
+  .matrix-wrap{break-inside:avoid!important;}
+  .info-card{border:1px solid #ccc!important;break-inside:avoid!important;}
+  .no-print{display:none!important;}
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    Model Benchmark
+  </h1>
+  <div class="header-actions">
+    <span style="font-size:.78rem;color:var(--muted);" id="status-label">Idle</span>
+    <button class="theme-btn" onclick="toggleTheme()" id="theme-btn" title="Toggle theme">&#9790;</button>
+    <button class="btn btn-outline" onclick="downloadPDF()" title="Download report as PDF">&#8681; PDF</button>
+    <button class="btn" id="btn-run" onclick="runBenchmark()">&#9654; Run Benchmark</button>
+  </div>
+</div>
+<div class="status-bar" id="status-bar">
+  <span class="dot"></span>
+  <span id="status-text">Ready</span>
+</div>
+<div class="layout">
+  <div class="sidebar">
+    <h3>Run History</h3>
+    {% if runs %}
+      {% for r in runs %}
+        <a class="sidebar-item{% if loop.first %} active{% endif %}" href="?run={{ r.run_id }}" data-run="{{ r.run_id }}">
+          <div>Run #{{ r.run_id }}</div>
+          <div class="date">{{ r.timestamp }} &middot; {{ r.models_tested|length }} models</div>
+        </a>
+      {% endfor %}
+    {% else %}
+      <div style="padding:8px 20px;font-size:.78rem;color:var(--muted);">No runs yet.</div>
+    {% endif %}
+  </div>
+  <div class="main">
+    {% if latest and latest.result %}
+      {% set res = latest.result.models if latest.result.models is defined else latest.result %}
+      {% set app_suggestions = latest.result.app_suggestions if latest.result.app_suggestions is defined else {} %}
+      {% set run_id = latest.run_id %}
+      <div class="dashboard-grid">
+        <div class="info-section">
+          <div class="info-card">
+            <h3>Run ID</h3>
+            <div class="value" style="font-size:.95rem;">{{ run_id }}</div>
+          </div>
+          <div class="info-card">
+            <h3>Models Tested</h3>
+            <div class="model-list">
+              {% for mname, mres in res.items() %}
+                <span class="model-tag">{{ mres.label }}</span>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="info-card">
+            <h3>Target Apps</h3>
+            <div class="model-list">
+              {% for a in apps %}
+                <span class="app-tag">{{ a.label }}</span>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        {% if app_suggestions %}
+          <div class="info-section">
+            {% for app_name, sugg in app_suggestions.items() %}
+              <div class="info-card" style="border-left:3px solid var(--green);">
+                <h3>{{ sugg.label }} &mdash; Recommended Model</h3>
+                <div class="value" style="font-size:1rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                  <span class="model-tag" style="background:var(--green-bg);color:var(--green);font-size:.85rem;">{{ sugg.best_model_label }}</span>
+                  <span class="score-badge score-5" style="font-size:.9rem;">{{ sugg.best_weighted_score }}</span>
+                  <span style="font-size:.78rem;color:var(--muted);font-weight:400;">weighted score</span>
+                </div>
+                {% if sugg.all_models|length > 1 %}
+                  <div style="margin-top:8px;font-size:.78rem;color:var(--secondary);">
+                    <strong>All candidates:</strong>
+                    {% for m in sugg.all_models %}
+                      <div style="display:flex;justify-content:space-between;padding:2px 0;">
+                        <span>{{ m.label }}</span>
+                        <span class="score-badge score-{{ m.score|round(0,'floor')|int }}" style="font-size:.75rem;min-width:30px;height:22px;">{{ m.score }}</span>
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <div class="matrix-wrap">
+          <table class="matrix" id="matrix">
+            <thead>
+              <tr>
+                <th style="min-width:160px;">Model</th>
+                {% for mkey in (metrics|list) %}
+                  <th style="text-align:center;" title="{{ metrics[mkey].description }}">{{ metrics[mkey].label }}</th>
+                {% endfor %}
+                <th style="text-align:center;">Overall</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for mname, mres in res.items() %}
+                {% set outer = loop %}
+                <tr>
+                  <td class="model-cell">
+                    <span class="model-tag">{{ mres.label }}</span>
+                    <span class="expander" onclick="toggleDetail('{{ mname|replace(':','_') }}')">&#9660;</span>
+                  </td>
+                  {% for mkey in (metrics|list) %}
+                    {% set ms = mres.metrics.get(mkey, {}) %}
+                    {% set sc = ms.get('score', 0) %}
+                    <td style="text-align:center;">
+                      <span class="score-badge score-{{ sc|round(0,'floor')|int }}">{{ sc }}</span>
+                      {% if ms.get('avg_time_s') %}
+                        <div style="font-size:.7rem;color:var(--muted);margin-top:2px;">{{ ms.avg_time_s }}s</div>
+                      {% endif %}
+                    </td>
+                  {% endfor %}
+                  <td style="text-align:center;">
+                    <span class="score-badge score-{{ mres.overall|round(0,'floor')|int }}" style="font-size:1rem;min-width:44px;height:32px;">{{ mres.overall }}</span>
+                  </td>
+                </tr>
+                <tr class="detail-row" id="detail-{{ mname|replace(':','_') }}">
+                  <td colspan="{{ (metrics|length) + 2 }}" class="detail-cell">
+                    <div class="detail-inner">
+                      {% for mkey, mdef in metrics.items() %}
+                        {% set ms = mres.metrics.get(mkey, {}) %}
+                        <div style="font-weight:600;margin-top:6px;color:var(--text);">{{ mdef.label }} ({{ ms.get('score', '-') }}/5)</div>
+                        {% for pq in ms.get('per_question', []) %}
+                          <div class="q-item">
+                            <div class="q-text">Q: {{ pq.q }}</div>
+                            <div class="q-reason">
+                              Score: {{ pq.score }}/5 &middot; {{ pq.reason }}
+                              {% if pq.time_s %}&middot; {{ pq.time_s }}s{% endif %}
+                            </div>
+                          </div>
+                        {% endfor %}
+                      {% endfor %}
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="icon">&#9670;</div>
+        <div>No benchmark data yet.</div>
+        <div style="font-size:.82rem;">Click <strong>Run Benchmark</strong> to test all configured models across {{ metrics|length }} quality metrics.</div>
+        <button class="btn" onclick="runBenchmark()" style="margin-top:12px;">&#9654; Run Benchmark</button>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+let running = {{ 'true' if running else 'false' }};
+const btn = document.getElementById('btn-run');
+const statusText = document.getElementById('status-text');
+const statusBar = document.getElementById('status-bar');
+const statusLabel = document.getElementById('status-label');
+
+function setStatus(text, type) {
+  statusBar.className = 'status-bar ' + (type || '');
+  statusText.textContent = text;
+}
+
+function poll() {
+  fetch('api/status')
+    .then(r => r.json())
+    .then(d => {
+      running = d.running;
+      btn.disabled = running;
+      if (running) {
+        btn.innerHTML = '<span class="spinner"></span> Running...';
+        statusLabel.textContent = 'Running';
+        setStatus('Benchmark in progress...', 'busy');
+      } else {
+        btn.innerHTML = '&#9654; Run Benchmark';
+        statusLabel.textContent = 'Idle';
+        setStatus('Ready', 'ready');
+      }
+      if (running) setTimeout(poll, 2000);
+    });
+}
+
+function runBenchmark() {
+  if (running) return;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Starting...';
+  fetch('api/benchmark', { method: 'POST' })
+    .then(r => {
+      if (!r.ok) throw new Error('Failed');
+      return r.json();
+    })
+    .then(d => {
+      statusLabel.textContent = 'Running';
+      setStatus('Benchmark started. Polling for completion...', 'busy');
+      setTimeout(poll, 2000);
+    })
+    .catch(e => {
+      setStatus('Failed to start benchmark.', 'error');
+      btn.disabled = false;
+      btn.innerHTML = '&#9654; Run Benchmark';
+    });
+}
+
+function toggleDetail(id) {
+  const row = document.getElementById('detail-' + id);
+  if (row) row.classList.toggle('visible');
+}
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? '' : 'dark');
+  localStorage.setItem('theme', isDark ? 'light' : 'dark');
+  document.getElementById('theme-btn').innerHTML = isDark ? '&#9790;' : '&#9728;';
+}
+(function() {
+  const saved = localStorage.getItem('theme');
+  if (saved === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.getElementById('theme-btn').innerHTML = '&#9728;';
+  }
+})();
+
+function downloadPDF() {
+  window.print();
+}
+
+// If running on load, start polling
+if (running) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Running...'; setTimeout(poll, 2000); }
+</script>
+</body>
+</html>
