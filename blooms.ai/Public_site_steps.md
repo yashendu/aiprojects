@@ -1,6 +1,6 @@
 # Public Site Deployment: blooms.ai
 
-**URL:** http://106.51.105.16/blooms/
+**URL:** http://124.123.88.71/blooms/
 **Date:** 2026-06-17
 
 ---
@@ -161,7 +161,7 @@ Enable: `sudo systemctl enable --now blooms-backend.service`
 
 ## Demo Apps Section
 
-**URL:** `http://106.51.105.16/blooms/demo/`
+**URL:** `http://124.123.88.71/blooms/demo/`
 **Auth:** HTTP Basic Auth (browser popup)
 **Username:** `demo`
 **Password:** `Oo&6Kjl1Bh` (stored in `web_conf.json` and `democonfig.json`)

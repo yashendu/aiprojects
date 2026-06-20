@@ -1,0 +1,7 @@
+flask==3.1.1
+gunicorn==23.0.0
+pyyaml==6.0.3
+requests==2.32.3
+PyMuPDF==1.25.5
+Pillow==11.1.0
+docling>=2.0.0

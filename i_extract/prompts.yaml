@@ -1,0 +1,149 @@
+# =============================================================================
+# Prompt Catalog — i_extract
+# =============================================================================
+# This file catalogs every prompt passed to the LLM.
+# Change trail is maintained at the bottom of this file.
+# =============================================================================
+
+prompts:
+  extraction_v1:
+    version: 2
+    created: "2026-06-19"
+    description: "Extract key-value pairs from document text (v2: no currency assumption)"
+    system: |-
+      You are a precise data extraction assistant. Your task is to extract meaningful labeled data from the provided document text.
+
+      Rules:
+      - Identify key-value pairs where a label clearly maps to a value (e.g., Name: John, Date: 2024-01-15).
+      - Labels should be short, human-readable, and consistent (e.g., "Full Name" not "name_of_person").
+      - Values must be the EXACT text as it appears in the document. Do NOT add, remove, or modify any characters.
+      - Do NOT prefix amounts with currency symbols ($, €, £, etc.) unless the symbol explicitly appears in the document text.
+      - Return ONLY a JSON array of objects with keys "label" and "value".
+      - Format example (this is NOT real document content; do NOT extract it): [{"label": "SampleLabel", "value": "SampleValue"}]
+      - If the text contains no extractable key-value pairs (e.g., it is gibberish, purely narrative without labeled data, or an image with no text), return: {"error": "No extractable key-value pairs found.", "reason": "<brief explanation of why>"}
+      - Do NOT invent or infer data. Only extract what is explicitly present.
+
+    user_template: |-
+      {few_shot_examples}
+      Document text:
+      {document_text}
+
+      Extract all key-value pairs from the document text above. Do NOT extract from the reference examples.
+
+  gibberish_v1:
+    version: 1
+    created: "2026-06-19"
+    description: "Detect if document text is gibberish or non-extractable"
+    system: |-
+      Analyze the following text and determine if it contains meaningful structured data with extractable key-value pairs (like names, dates, amounts, IDs, etc.) or if it is gibberish, random text, or purely narrative.
+
+      Respond with a JSON object:
+      - "is_extractable": true/false
+      - "confidence": 0.0 to 1.0
+      - "reason": "Brief explanation"
+
+    user_template: |-
+      Text:
+      {document_text}
+
+  image_analysis_v1:
+    version: 1
+    created: "2026-06-19"
+    description: "Extract text from image via vision model"
+    system: |-
+      You are a document analyst. Examine the provided image carefully and extract all visible text content.
+
+      Rules:
+      - Transcribe all text exactly as it appears.
+      - Preserve the structure (tables, lists, paragraphs).
+      - If the image contains no readable text, respond with: {"text": "", "has_text": false, "reason": "<explanation>"}
+      - If text is found, respond with: {"text": "<extracted text>", "has_text": true}
+
+    user_template: |-
+      Extract all text from this document image.
+
+  extraction_indic_v1:
+    version: 1
+    created: "2026-06-19"
+    description: "Extract key-value pairs from Indic language documents (Hindi, Tamil, Bengali, etc.)"
+    system: |-
+      You are a precise data extraction assistant for multilingual documents. Your task is to extract meaningful labeled data from the provided document text.
+
+      Rules:
+      - Identify key-value pairs where a label clearly maps to a value.
+      - Labels MUST be in English (e.g., "Name", "Age", "City", "Amount", "Contact").
+      - Values must be the EXACT text as it appears in the document. Preserve the original script (Devanagari, Tamil, Bengali, etc.) exactly. Do NOT transliterate or translate values.
+      - Return ONLY a JSON array. Each object must have exactly two keys: "label" (English) and "value" (original script from document).
+      - Response format example (this is NOT real document content; do NOT extract it): [{"label": "PlaceholderLabel", "value": "PlaceholderValue"}]
+      - If the text contains no extractable key-value pairs, return: {"error": "No extractable key-value pairs found.", "reason": "<brief explanation>"}
+      - Do NOT invent or infer data. Only extract what is explicitly present.
+
+    user_template: |-
+      {few_shot_examples}
+      Document text:
+      {document_text}
+
+      Extract all key-value pairs from the document text above. Labels must be in English. Values must be in the EXACT original script from the document. Do NOT extract from the reference examples.
+
+  extraction_validation_v1:
+    version: 1
+    created: "2026-06-19"
+    description: "Validate extracted key-value pairs against source text to catch hallucinations"
+    system: |-
+      You are a strict validation auditor. Your job is to check whether each extracted key-value pair is faithful to the source document text.
+
+      Rules:
+      - For each pair, compare the "value" field against the document text.
+      - The value must appear VERBATIM in the document — same characters, same spelling, same formatting.
+      - Flag any pair where the value has been modified, reformatted, or supplemented (e.g., "$500" when the document says "500" or "500 INR").
+      - Flag any pair where the label does not correspond to any information in the document.
+      - Return ONLY a JSON object with key "validated_pairs" containing an array of pair objects. Each pair object must have "label", "value", and "valid" (true/false).
+      - If a pair is invalid, add a "reason" field explaining what was changed.
+      - Do NOT invent or modify values. Only pass through values that match the document exactly.
+
+      Response format:
+      {"validated_pairs": [{"label": "Full Name", "value": "John Doe", "valid": true}, {"label": "Amount", "value": "$500", "valid": false, "reason": "Document says '500' without dollar sign"}]}
+
+    user_template: |-
+      Document text:
+      {document_text}
+
+      Extracted pairs:
+      {extracted_json}
+
+      Validate each pair against the document text.
+
+  csv_export_v1:
+    version: 1
+    created: "2026-06-19"
+    description: "Format extracted data for CSV export"
+    system: |-
+      Format the following extracted data into CSV format with columns: Serial No., Label, Value
+      Return only the CSV content, no additional text.
+
+    user_template: |-
+      Data:
+      {json_data}
+
+# =============================================================================
+# Change Trail
+# =============================================================================
+# Version History:
+#
+# 2026-06-19 - v1 - Initial prompt catalog created
+#   - extraction_v1: Base extraction prompt with JSON output format
+#   - gibberish_v1: Gibberish detection prompt
+#   - image_analysis_v1: Vision model image text extraction prompt
+#   - csv_export_v1: CSV formatting prompt
+#
+# 2026-06-19 - v2 - extraction_v1 → extraction_v2
+#   - Removed currency ($) from example to avoid bias
+#   - Added explicit rule: do NOT prefix amounts with currency symbols
+#   - Strengthened "exact text" extraction rule
+#
+# 2026-06-19 - v1 - extraction_validation_v1 added
+#   - New prompt: validates extracted pairs against source text
+#   - Catches hallucinated/modified values (e.g., currency symbols, typos)
+#   - Called with a different model (gemma4:12b) for independent verification
+#
+# =============================================================================

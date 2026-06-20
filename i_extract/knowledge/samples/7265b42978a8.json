@@ -1,0 +1,21 @@
+{
+  "id": "7265b42978a8",
+  "filename": "english_test.pdf",
+  "document_text": "Name: Alice Johnson Age: 32 City: Bangalore",
+  "extracted_pairs": [
+    {
+      "label": "Name",
+      "value": "Alice Johnson"
+    },
+    {
+      "label": "Age",
+      "value": "32"
+    },
+    {
+      "label": "City",
+      "value": "Bangalore"
+    }
+  ],
+  "model_used": "llama3.2:3b",
+  "pair_count": 3
+}

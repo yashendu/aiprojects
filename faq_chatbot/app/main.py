@@ -75,7 +75,8 @@ def get_suggestions(context):
 @app.route('/')
 def index():
     return render_template('index.html',
-                           max_lines=CONFIG['limits']['max_paste_lines'])
+                           max_lines=CONFIG['limits']['max_paste_lines'],
+                           model_label=OLLAMA_MODEL)
 
 
 def auto_load_sample(sid):

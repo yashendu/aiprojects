@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>i_extract &middot; Blooms.ai</title>
+<style>
+:root {
+  --bg: #f5f5f8; --card: #fff; --text: #1a1a2e; --secondary: #555; --muted: #888;
+  --accent: #7c3aed; --accent-hover: #6d28d9; --accent-light: rgba(124,58,237,0.1);
+  --border: #e8e8ee; --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+  --radius: 12px; --shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+[data-theme="dark"] {
+  --bg: #0f0f1a; --card: #1a1a2e; --text: #e4e4ed; --secondary: #a0a0b8; --muted: #6b6b82;
+  --accent: #a78bfa; --accent-hover: #8b6ff5; --accent-light: rgba(167,139,250,0.12);
+  --border: #2a2a40; --success: #34d399; --warning: #fbbf24; --danger: #f87171;
+  --shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif;
+  background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;line-height:1.5;
+  overflow:hidden;
+}
+.header{
+  background:var(--card);border-bottom:1px solid var(--border);
+  padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:10px;
+}
+.header-left{display:flex;align-items:center;gap:8px;}
+.logo-text{font-size:1rem;font-weight:700;color:var(--accent);}
+.header-right{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.theme-btn{background:none;border:1px solid var(--border);border-radius:6px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--secondary);font-size:.9rem;}
+.theme-btn:hover{background:var(--accent-light);color:var(--accent);border-color:var(--accent);}
+.model-card{
+  display:flex;align-items:center;gap:5px;
+  background:var(--accent-light);border:1px solid var(--border);border-radius:6px;
+  padding:3px 8px;font-size:.72rem;font-weight:500;color:var(--accent);white-space:nowrap;
+}
+.model-card svg{width:13px;height:13px;flex-shrink:0;}
+.model-card .md-sep{color:var(--border);margin:0 2px;}
+.btn{
+  background:var(--accent-light);border:1px solid var(--border);border-radius:6px;
+  padding:6px 12px;font-size:.78rem;font-weight:500;color:var(--accent);cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .2s;
+}
+.btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.btn-primary{background:var(--accent);color:#fff;border:none;border-radius:6px;padding:7px 16px;font-size:.8rem;font-weight:600;cursor:pointer;transition:all .2s;}
+.btn-primary:hover{background:var(--accent-hover);}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;}
+
+.info-banner{
+  background:linear-gradient(135deg,#f5f0ff,#ede9fe);border-bottom:1px solid var(--border);padding:10px 16px;flex-shrink:0;
+}
+[data-theme="dark"] .info-banner{background:linear-gradient(135deg,#1a1a30,#15152a);}
+.info-banner .banner-title{font-size:.85rem;font-weight:600;color:var(--text);margin-bottom:4px;}
+.info-banner .banner-desc{font-size:.78rem;color:var(--secondary);line-height:1.5;}
+
+.status-bar{
+  display:flex;align-items:center;gap:6px;padding:6px 16px;font-size:.74rem;color:var(--muted);flex-shrink:0;
+  background:var(--card);border-bottom:1px solid var(--border);transition:all .3s;
+}
+.status-bar .dot{width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0;}
+.status-bar.ready .dot{background:var(--success);}
+.status-bar.busy .dot{background:var(--warning);animation:pulse 1s infinite;}
+.status-bar.error .dot{background:var(--danger);}
+@keyframes pulse{0%,100%{opacity:.4;}50%{opacity:1;}}
+
+.upload-bar{
+  display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--card);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;
+}
+.upload-bar input[type=file]{font-size:.78rem;color:var(--text);flex:1;min-width:140px;}
+.upload-bar .hint{font-size:.72rem;color:var(--muted);}
+
+.main-split{
+  flex:1;display:flex;overflow:hidden;min-height:0;
+}
+.doc-pane{
+  flex:1;overflow-y:auto;padding:12px 16px;background:var(--card);border-right:1px solid var(--border);
+}
+.doc-pane .doc-page{margin-bottom:16px;}
+.doc-pane .doc-text{
+  font-family:monospace;font-size:.8rem;line-height:1.7;color:var(--text);white-space:pre-wrap;word-break:break-word;
+}
+.doc-pane .doc-line{
+  display:inline;cursor:default;transition:background .15s;border-radius:2px;padding:0 1px;
+}
+.doc-pane .doc-line.highlight{background:rgba(124,58,237,.2);}
+[data-theme="dark"] .doc-pane .doc-line.highlight{background:rgba(167,139,250,.25);}
+.doc-pane .doc-empty{color:var(--muted);font-style:italic;padding:20px;text-align:center;}
+.doc-page.hl-page{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px;}
+.doc-img-wrap{position:relative;display:inline-block;width:100%;}
+.hl-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;}
+.hl-overlay .hl-box{position:absolute;background:rgba(124,58,237,0.25);border:2px solid var(--accent);border-radius:2px;transition:opacity .3s;}
+.doc-empty-state{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:.85rem;text-align:center;gap:8px;
+}
+
+.extract-pane{
+  width:45%;min-width:340px;display:flex;flex-direction:column;overflow:hidden;background:var(--card);
+}
+.extract-header{
+  display:flex;align-items:center;justify-content:space-between;padding:8px 16px;
+  border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.extract-header h3{font-size:.82rem;font-weight:600;}
+.extract-header .count{font-size:.74rem;color:var(--muted);}
+.extract-body{flex:1;overflow-y:auto;padding:8px 12px;}
+.extract-empty{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:.8rem;text-align:center;gap:8px;padding:20px;
+}
+
+.extract-table{width:100%;border-collapse:collapse;}
+.extract-table th{
+  text-align:left;font-size:.74rem;font-weight:600;color:var(--secondary);padding:6px 8px;border-bottom:2px solid var(--border);position:sticky;top:0;background:var(--card);
+}
+.extract-table td{padding:4px 8px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.extract-table tr{cursor:pointer;transition:background .15s;}
+.extract-table tr:hover{background:var(--accent-light);}
+.extract-table tr.active-row{background:var(--accent-light);outline:1px solid var(--accent);}
+.extract-table .sno{font-size:.74rem;color:var(--muted);width:36px;}
+.extract-table .edit-input{
+  width:100%;border:1px solid transparent;border-radius:4px;padding:4px 6px;font-size:.78rem;font-family:inherit;color:var(--text);background:transparent;transition:all .2s;
+}
+.extract-table .edit-input:hover{border-color:var(--border);}
+.extract-table .edit-input:focus{outline:none;border-color:var(--accent);background:var(--bg);}
+.extract-table .del-btn{
+  background:none;border:none;color:var(--danger);cursor:pointer;font-size:.85rem;padding:2px 4px;border-radius:4px;opacity:.4;transition:opacity .2s;
+}
+.extract-table .del-btn:hover{opacity:1;background:rgba(239,68,68,.1);}
+
+.add-row-bar{
+  display:flex;gap:6px;padding:8px 12px;border-top:1px solid var(--border);flex-shrink:0;
+}
+.add-row-bar input{
+  flex:1;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:.78rem;outline:none;background:var(--bg);color:var(--text);
+}
+.add-row-bar input:focus{border-color:var(--accent);}
+
+.extract-footer{
+  display:flex;align-items:center;justify-content:space-between;padding:8px 16px;border-top:1px solid var(--border);flex-shrink:0;gap:8px;
+}
+.extract-footer .learn-badge{font-size:.72rem;color:var(--muted);}
+
+.message-bar{
+  padding:8px 16px;font-size:.78rem;flex-shrink:0;display:none;align-items:flex-start;gap:6px;
+  border-bottom:1px solid var(--border);
+}
+.message-bar.show{display:flex;}
+.message-bar.info{background:#eef2ff;color:#4338ca;}
+.message-bar.warn{background:#fffbeb;color:#b45309;}
+.message-bar.err{background:#fef2f2;color:#dc2626;}
+[data-theme="dark"] .message-bar.info{background:rgba(67,56,202,.15);color:#a5b4fc;}
+[data-theme="dark"] .message-bar.warn{background:rgba(180,83,9,.15);color:#fcd34d;}
+[data-theme="dark"] .message-bar.err{background:rgba(220,38,38,.15);color:#fca5a5;}
+.message-bar svg{width:16px;height:16px;flex-shrink:0;margin-top:1px;}
+
+/* ── Use case features ── */
+.banner-sub{font-size:.78rem;font-weight:600;color:var(--text);margin:8px 0 6px;letter-spacing:.01em;}
+.info-features{display:flex;gap:6px;flex-wrap:wrap;}
+.info-feat{
+  display:flex;align-items:center;gap:5px;
+  background:rgba(255,255,255,.7);border:1px solid var(--border);border-radius:8px;
+  padding:5px 11px;font-size:.74rem;color:var(--text);white-space:nowrap;
+  transition:box-shadow .2s,border-color .2s;
+}
+.info-feat:hover{box-shadow:0 2px 10px rgba(124,58,237,.08);border-color:var(--accent);}
+[data-theme="dark"] .info-feat{background:rgba(255,255,255,.06);}
+.info-feat svg{width:16px;height:16px;flex-shrink:0;color:var(--accent);}
+.info-feat .feat-label{font-size:.74rem;font-weight:500;}
+
+/* ── How To Section ── */
+.howto{
+  background:var(--card);border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.howto-header{
+  display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;
+  padding:9px 16px;font-size:.80rem;font-weight:600;color:var(--accent);
+  transition:background .2s;
+}
+.howto-header:hover{background:var(--accent-light);}
+.howto-header svg{width:18px;height:18px;transition:transform .2s;}
+.howto-header.open svg{transform:rotate(90deg);}
+.howto-body{
+  display:none;padding:0 16px 12px;
+  font-size:.78rem;color:var(--secondary);line-height:1.6;
+}
+.howto-body.open{display:block;}
+.howto-body ol{margin:0;padding-left:20px;}
+.howto-body li{margin-bottom:5px;}
+.howto-body li:last-child{margin-bottom:0;}
+.howto-body strong{color:var(--text);}
+.howto-disclaimer{
+  margin-top:8px;padding:7px 10px;border-radius:6px;
+  font-size:.72rem;color:var(--warning);background:rgba(251,191,36,0.08);
+  display:flex;align-items:flex-start;gap:6px;
+}
+[data-theme="dark"] .howto-disclaimer{background:rgba(251,191,36,0.06);}
+
+@media(max-width:900px){
+  .main-split{flex-direction:column;}
+  .doc-pane{border-right:none;border-bottom:1px solid var(--border);max-height:40vh;}
+  .extract-pane{width:100%;min-width:0;}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    <span class="logo-text">i_extract</span>
+  </div>
+  <div class="header-right">
+    <div class="model-card">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      {{ model_label }}<span class="md-sep">|</span>{{ vision_label }}<span class="md-sep">|</span>{{ validation_label }}{% if indic_label and indic_label != validation_label and indic_label != model_label %}<span class="md-sep">|</span>{{ indic_label }}{% endif %}
+    </div>
+    <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">&#9790;</button>
+  </div>
+</div>
+
+<div class="info-banner">
+  <div class="banner-title"><strong>Local LLM-Powered Data Extraction: From Documents to Structured Data</strong></div>
+  <div class="banner-desc">Upload a PDF or JPEG and extract structured key-value pairs&mdash;names, dates, amounts, IDs&mdash;using a local LLM. The split-view interface lets you review and edit extracted fields, click a row to locate the source text, and export results as CSV. All processing stays on your infrastructure.</div>
+  <div class="banner-sub">Possible Use Cases</div>
+  <div class="info-features">
+    <div class="info-feat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <span class="feat-label">Invoices &amp; Receipts</span>
+    </div>
+    <div class="info-feat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span class="feat-label">Identity Documents</span>
+    </div>
+    <div class="info-feat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><path d="M7 10l3 3 7-7"/></svg>
+      <span class="feat-label">Contracts &amp; Agreements</span>
+    </div>
+    <div class="info-feat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      <span class="feat-label">Forms &amp; Applications</span>
+    </div>
+  </div>
+</div>
+
+<!-- How To -->
+<div class="howto" id="howto">
+  <div class="howto-header" onclick="toggleHowto()" id="howto-header">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    How to Use This Demo
+  </div>
+  <div class="howto-body" id="howto-body">
+    <ol>
+      <li><strong>Upload a document</strong> &mdash; Select a PDF or JPEG file and click <em>Extract Data</em>.</li>
+      <li><strong>Review the results</strong> &mdash; Extracted key-value pairs appear in the right pane. Labels and values are editable inline.</li>
+      <li><strong>Locate source text</strong> &mdash; Click any row to highlight the matching value in the document pane on the left (PDF only; not available for JPEG images).</li>
+      <li><strong>Export or refine</strong> &mdash; Add, edit, or delete fields as needed, then click <em>Download CSV</em>.</li>
+    </ol>
+    <div class="howto-disclaimer">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span>Content you upload may be used for model training and fine-tuning.</span>
+    </div>
+  </div>
+</div>
+
+<div class="status-bar ready" id="status-bar">
+  <span class="dot"></span>
+  <span id="status-text">Ready</span>
+</div>
+
+<div class="upload-bar">
+  <input type="file" id="file-input" accept=".pdf,.jpg,.jpeg">
+  <button class="btn-primary" id="btn-extract" onclick="uploadFile()">Extract Data</button>
+  <span class="hint">PDF or JPEG &mdash; max 2 MB</span>
+</div>
+
+<div id="message-bar" class="message-bar"></div>
+
+<div class="main-split" id="main-split">
+  <div class="doc-pane" id="doc-pane">
+    <div class="doc-empty-state" id="doc-empty">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".3"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <div>Upload a document to begin extraction.</div>
+    </div>
+  </div>
+  <div class="extract-pane" id="extract-pane">
+    <div class="extract-header">
+      <h3>Extracted Fields</h3>
+      <span class="count" id="field-count">0 fields</span>
+    </div>
+    <div class="extract-body" id="extract-body">
+      <div class="extract-empty" id="extract-empty">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".3"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <div>Extracted fields will appear here.</div>
+      </div>
+      <table class="extract-table" id="extract-table" style="display:none;">
+        <thead><tr><th class="sno">#</th><th>Label</th><th>Value</th><th></th></tr></thead>
+        <tbody id="extract-tbody"></tbody>
+      </table>
+    </div>
+    <div class="add-row-bar" id="add-row-bar" style="display:none;">
+      <input type="text" id="new-label" placeholder="Label">
+      <input type="text" id="new-value" placeholder="Value">
+      <button class="btn" onclick="addRow()">+ Add</button>
+    </div>
+    <div class="extract-footer" id="extract-footer" style="display:none;">
+      <button class="btn" onclick="exportCSV()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download CSV
+      </button>
+      <span class="learn-badge" id="learn-badge"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+let extractedRows = [];
+let activeRowIdx = -1;
+const BASE = window.location.pathname.replace(/\/?$/, '/');
+const MAX_MB = {{ max_mb }};
+let loading = false;
+
+function setStatus(text, type) {
+  const bar = document.getElementById('status-bar');
+  bar.className = 'status-bar ' + (type || 'ready');
+  document.getElementById('status-text').textContent = text;
+}
+
+function showMessage(text, type) {
+  const bar = document.getElementById('message-bar');
+  bar.className = 'message-bar show ' + (type || 'info');
+  const icons = {info: 'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM12 16v-4M12 8h.01', warn: 'M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01', err: 'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM15 9l-6 6M9 9l6 6'};
+  bar.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="' + (icons[type] || icons.info) + '"/></svg><span>' + text + '</span>';
+}
+
+function hideMessage() {
+  document.getElementById('message-bar').className = 'message-bar';
+}
+
+async function uploadFile() {
+  if (loading) return;
+  const input = document.getElementById('file-input');
+  if (!input.files.length) { setStatus('Select a file first.', 'error'); return; }
+  loading = true;
+  hideMessage();
+  setStatus('Initiating...', 'busy');
+  document.getElementById('btn-extract').disabled = true;
+
+  const fd = new FormData();
+  fd.append('file', input.files[0]);
+  try {
+    const r = await fetch(BASE + 'api/upload', { method: 'POST', body: fd });
+    const reader = r.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+    let finalData = null;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop() || '';
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        try {
+          const ev = JSON.parse(line);
+          if (ev.stage === 'complete' || ev.stage === 'error') {
+            finalData = ev;
+          } else if (ev.message) {
+            setStatus(ev.message, 'busy');
+          }
+        } catch(e) {}
+      }
+    }
+    if (finalData) {
+      if (finalData.stage === 'error') {
+        showMessage(finalData.message, 'err');
+        setStatus('Error', 'error');
+      } else {
+        renderResults(finalData);
+        setStatus(finalData.message || 'Done', 'ready');
+      }
+    }
+  } catch(e) {
+    showMessage('Upload failed: ' + e.message, 'err');
+    setStatus('Error', 'error');
+  } finally {
+    loading = false;
+    document.getElementById('btn-extract').disabled = false;
+  }
+}
+
+function renderResults(data) {
+  const docPane = document.getElementById('doc-pane');
+  const empty = document.getElementById('doc-empty');
+  if (empty) empty.remove();
+
+  if (data.document_html) {
+    docPane.innerHTML = data.document_html;
+  }
+
+  if (data.message) {
+    showMessage(data.message, data.extracted && data.extracted.length ? 'info' : 'warn');
+  }
+
+  if (data.extracted && data.extracted.length) {
+    extractedRows = data.extracted.map((e, i) => ({ id: i + 1, label: e.label, value: e.value }));
+    renderTable();
+    document.getElementById('extract-empty').style.display = 'none';
+    document.getElementById('extract-table').style.display = '';
+    document.getElementById('add-row-bar').style.display = '';
+    document.getElementById('extract-footer').style.display = '';
+  }
+
+  fetchLearningStats();
+}
+
+function renderTable() {
+  const tbody = document.getElementById('extract-tbody');
+  tbody.innerHTML = '';
+  extractedRows.forEach((row, idx) => {
+    const tr = document.createElement('tr');
+    tr.dataset.idx = idx;
+    tr.onclick = () => highlightRow(idx);
+    if (idx === activeRowIdx) tr.classList.add('active-row');
+
+    const tdSno = document.createElement('td');
+    tdSno.className = 'sno';
+    tdSno.textContent = row.id;
+
+    const tdLabel = document.createElement('td');
+    const inpLabel = document.createElement('input');
+    inpLabel.className = 'edit-input';
+    inpLabel.value = row.label;
+    inpLabel.oninput = () => { extractedRows[idx].label = inpLabel.value; };
+    inpLabel.onclick = (e) => e.stopPropagation();
+    tdLabel.appendChild(inpLabel);
+
+    const tdValue = document.createElement('td');
+    const inpValue = document.createElement('input');
+    inpValue.className = 'edit-input';
+    inpValue.value = row.value;
+    inpValue.oninput = () => { extractedRows[idx].value = inpValue.value; };
+    inpValue.onclick = (e) => e.stopPropagation();
+    tdValue.appendChild(inpValue);
+
+    const tdDel = document.createElement('td');
+    const delBtn = document.createElement('button');
+    delBtn.className = 'del-btn';
+    delBtn.innerHTML = '&times;';
+    delBtn.onclick = (e) => { e.stopPropagation(); deleteRow(idx); };
+    tdDel.appendChild(delBtn);
+
+    tr.appendChild(tdSno);
+    tr.appendChild(tdLabel);
+    tr.appendChild(tdValue);
+    tr.appendChild(tdDel);
+    tbody.appendChild(tr);
+  });
+  document.getElementById('field-count').textContent = extractedRows.length + ' fields';
+}
+
+function normWS(s) { return s.replace(/\s+/g, ' '); }
+
+function clearHighlight() {
+  document.querySelectorAll('.hl-box').forEach(el => el.remove());
+  document.querySelectorAll('.doc-page.hl-page').forEach(el => el.classList.remove('hl-page'));
+}
+
+function highlightRow(idx) {
+  activeRowIdx = idx;
+  document.querySelectorAll('#extract-tbody tr').forEach((tr, i) => {
+    tr.classList.toggle('active-row', i === idx);
+  });
+
+  clearHighlight();
+  if (idx < 0 || idx >= extractedRows.length) return;
+  const val = extractedRows[idx].value;
+  if (!val) return;
+
+  const nv = normWS(val.toLowerCase());
+
+  // Try bounding-box based highlighting (PDF images with data-lines)
+  for (const page of document.querySelectorAll('.doc-page[data-lines]')) {
+    let lines;
+    try { lines = JSON.parse(page.dataset.lines); } catch(e) { continue; }
+    if (!lines || !lines.length) continue;
+    for (const entry of lines) {
+      if (normWS(entry.text.toLowerCase()).includes(nv)) {
+        const img = page.querySelector('.doc-img');
+        const overlay = page.querySelector('.hl-overlay');
+        if (!img || !overlay) break;
+        const scale = img.clientWidth / parseInt(page.dataset.imgW);
+        const [x0, y0, x1, y1] = entry.bbox_px;
+        const box = document.createElement('div');
+        box.className = 'hl-box';
+        box.style.cssText = `left:${x0*scale}px;top:${y0*scale}px;width:${(x1-x0)*scale}px;height:${(y1-y0)*scale}px;`;
+        overlay.appendChild(box);
+        img.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        page.classList.add('hl-page');
+        setTimeout(clearHighlight, 3000);
+        return;
+      }
+    }
+  }
+
+  // Fallback: text-based highlighting via hidden .doc-line spans
+  const spans = document.querySelectorAll('.doc-line');
+  if (!spans.length) {
+    showMessage('Row highlight is not available for image files.', 'warn');
+    return;
+  }
+  for (const line of spans) {
+    if (normWS(line.textContent.toLowerCase()).includes(nv)) {
+      const page = line.closest('.doc-page');
+      if (page) {
+        const img = page.querySelector('.doc-img, .doc-text');
+        if (img) {
+          img.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          page.classList.add('hl-page');
+          setTimeout(clearHighlight, 2000);
+        }
+      }
+      return;
+    }
+  }
+  showMessage('Could not locate "' + val + '" in the document text.', 'warn');
+}
+
+function deleteRow(idx) {
+  extractedRows.splice(idx, 1);
+  extractedRows.forEach((r, i) => r.id = i + 1);
+  if (activeRowIdx >= extractedRows.length) activeRowIdx = -1;
+  renderTable();
+}
+
+function addRow() {
+  const label = document.getElementById('new-label').value.trim();
+  const value = document.getElementById('new-value').value.trim();
+  if (!label || !value) return;
+  extractedRows.push({ id: extractedRows.length + 1, label, value });
+  document.getElementById('new-label').value = '';
+  document.getElementById('new-value').value = '';
+  document.getElementById('extract-empty').style.display = 'none';
+  document.getElementById('extract-table').style.display = '';
+  document.getElementById('add-row-bar').style.display = '';
+  document.getElementById('extract-footer').style.display = '';
+  renderTable();
+}
+
+async function exportCSV() {
+  if (!extractedRows.length) return;
+  try {
+    const r = await fetch(BASE + 'api/export_csv', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ rows: extractedRows }),
+    });
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'extracted_data.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch(e) {
+    showMessage('Export failed: ' + e.message, 'err');
+  }
+}
+
+async function fetchLearningStats() {
+  try {
+    const r = await fetch(BASE + 'api/learning/stats');
+    const d = await r.json();
+    document.getElementById('learn-badge').textContent = '\u26A1 ' + d.sample_count + ' reference samples';
+  } catch(e) {}
+}
+
+document.getElementById('file-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') uploadFile();
+});
+
+function toggleHowto() {
+  const body = document.getElementById('howto-body');
+  const header = document.getElementById('howto-header');
+  body.classList.toggle('open');
+  header.classList.toggle('open');
+}
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? '' : 'dark');
+  localStorage.setItem('theme', isDark ? 'light' : 'dark');
+  document.getElementById('theme-btn').innerHTML = isDark ? '&#9790;' : '&#9728;';
+}
+(function() {
+  const saved = localStorage.getItem('theme');
+  if (saved === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.getElementById('theme-btn').innerHTML = '&#9728;';
+  }
+})();
+</script>
+</body>
+</html>

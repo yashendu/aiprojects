@@ -1,0 +1,31 @@
+ollama:
+  host: http://host.docker.internal:11434
+  model: llama3.2:3b
+  vision_model: qwen3.5:4b
+  validation_model: gemma4:12b
+  indic_model: gemma4:12b
+  embedding_model: nomic-embed-text
+
+generation:
+  temperature: 0.1
+  top_p: 0.9
+  max_tokens: 4096
+  repeat_penalty: 1.1
+
+limits:
+  max_upload_mb: 2
+  max_image_pixels: 4096000
+  supported_images:
+    - .jpg
+    - .jpeg
+  supported_docs:
+    - .pdf
+
+learning:
+  max_samples: 100
+  similarity_top_k: 3
+  store_path: /app/knowledge/samples
+
+extraction:
+  min_confidence: 0.3
+  max_pairs: 50

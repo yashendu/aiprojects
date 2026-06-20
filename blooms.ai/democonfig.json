@@ -9,6 +9,10 @@
     {
       "display": "Model_Benchmark",
       "internal_url": "http://localhost:5052"
+    },
+    {
+      "display": "i_extract",
+      "internal_url": "http://localhost:5053"
     }
   ]
 }

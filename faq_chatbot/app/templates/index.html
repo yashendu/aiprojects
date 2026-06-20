@@ -50,6 +50,12 @@
 }
 .theme-btn{background:none;border:1px solid var(--border);border-radius:8px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--secondary);transition:all .2s;font-size:1rem;}
 .theme-btn:hover{background:var(--accent-light);color:var(--accent);border-color:var(--accent);}
+.model-card{
+  display:flex;align-items:center;gap:5px;
+  background:var(--accent-light);border:1px solid var(--border);border-radius:8px;
+  padding:4px 10px;font-size:.75rem;font-weight:500;color:var(--accent);white-space:nowrap;
+}
+.model-card svg{width:14px;height:14px;flex-shrink:0;}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif;
@@ -77,17 +83,23 @@ body{
 /* ── Info Banner ── */
 .info-banner{
   background:linear-gradient(135deg, #f5f0ff, #ede9fe);
-  border-bottom:1px solid var(--border);padding:14px 20px;flex-shrink:0;
+  border-bottom:1px solid var(--border);padding:16px 20px;flex-shrink:0;
 }
 [data-theme="dark"] .info-banner{background:linear-gradient(135deg, #1a1a30, #15152a);}
-.info-banner p{font-size:.8rem;color:var(--secondary);line-height:1.5;margin-bottom:10px;}
-.info-features{display:flex;gap:6px;flex-wrap:wrap;}
+.info-banner .banner-title{font-size:.9rem;color:var(--text);margin-bottom:6px;}
+.info-banner .banner-desc{font-size:.82rem;color:var(--secondary);line-height:1.6;margin-bottom:8px;}
+.info-banner .banner-sub{font-size:.8rem;font-weight:600;color:var(--text);margin-bottom:8px;letter-spacing:.01em;}
+.info-features{display:flex;gap:8px;flex-wrap:wrap;}
 .info-feat{
-  display:flex;align-items:center;gap:5px;
-  background:rgba(255,255,255,.7);border:1px solid var(--border);border-radius:8px;
-  padding:5px 11px;font-size:.75rem;color:var(--text);white-space:nowrap;
+  display:flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,.7);border:1px solid var(--border);border-radius:10px;
+  padding:7px 14px;font-size:.78rem;color:var(--text);white-space:nowrap;
+  transition:box-shadow .2s,border-color .2s;
 }
+.info-feat:hover{box-shadow:0 2px 10px rgba(124,58,237,.08);border-color:var(--accent);}
 [data-theme="dark"] .info-feat{background:rgba(255,255,255,.06);}
+.info-feat svg{width:18px;height:18px;flex-shrink:0;color:var(--accent);}
+.info-feat .feat-label{font-size:.78rem;font-weight:500;}
 
 /* ── Status bar ── */
 .status-bar{
@@ -102,14 +114,33 @@ body{
 .status-bar.error .dot{background:var(--danger);}
 @keyframes pulse{0%,100%{opacity:.4;}50%{opacity:1;}}
 
-/* ── Disclaimer ── */
-.disclaimer{
-  font-size:.72rem;color:var(--muted);padding:7px 20px;
-  border-bottom:1px solid var(--border);flex-shrink:0;
-  display:flex;align-items:center;gap:5px;
-  background:#fff8e1;
+/* ── How To Section ── */
+.howto{
+  background:var(--card);border-bottom:1px solid var(--border);flex-shrink:0;
 }
-[data-theme="dark"] .disclaimer{background:rgba(251,191,36,0.08);color:var(--warning);}
+.howto-header{
+  display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;
+  padding:10px 20px;font-size:.82rem;font-weight:600;color:var(--accent);
+  transition:background .2s;
+}
+.howto-header:hover{background:var(--accent-light);}
+.howto-header svg{width:18px;height:18px;transition:transform .2s;}
+.howto-header.open svg{transform:rotate(90deg);}
+.howto-body{
+  display:none;padding:0 20px 14px;
+  font-size:.8rem;color:var(--secondary);line-height:1.6;
+}
+.howto-body.open{display:block;}
+.howto-body ol{margin:0;padding-left:20px;}
+.howto-body li{margin-bottom:6px;}
+.howto-body li:last-child{margin-bottom:0;}
+.howto-body strong{color:var(--text);}
+.howto-disclaimer{
+  margin-top:10px;padding:8px 12px;border-radius:8px;
+  font-size:.75rem;color:var(--warning);background:rgba(251,191,36,0.08);
+  display:flex;align-items:flex-start;gap:6px;
+}
+[data-theme="dark"] .howto-disclaimer{background:rgba(251,191,36,0.06);}
 
 /* ── Mode bar ── */
 .mode-bar{
@@ -265,6 +296,10 @@ body{
     <span class="logo-text">FAQ Chatbot</span>
   </div>
   <div class="header-right">
+    <div class="model-card">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      {{ model_label }}
+    </div>
     <button class="theme-btn" onclick="toggleTheme()" id="theme-btn" title="Toggle theme">&#9790;</button>
     <button class="btn-icon" onclick="restart()">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 2v5h5M14 14V9H9"/><path d="M13.5 7.5A7 7 0 0 0 3 4M2.5 8.5A7 7 0 0 0 13 12"/></svg>
@@ -275,11 +310,26 @@ body{
 
 <!-- ─── Info Banner ─── -->
 <div class="info-banner">
-  <p><strong>RAG Document Q&amp;A Demo</strong> &mdash; Chat with documents using AI. The sample <strong>HR policy</strong> is pre-loaded. Upload your own files or paste text to test with your content. Answers come strictly from the loaded document.</p>
+  <div class="banner-title"><strong>Secure Local Intelligence: Enterprise AI Without the Cloud Risk</strong></div>
+  <div class="banner-desc">For organizations handling strict regulatory compliance, proprietary IP, and highly confidential workforce records, public cloud LLMs are a non-starter. Our enterprise-grade AI platform brings the power of advanced generative intelligence entirely within your controlled perimeter. Powered by Llama 3.2, our architecture balances low-latency processing with exceptional instruction-following accuracy.</div>
+  <div class="banner-sub">Possible Use Cases</div>
   <div class="info-features">
-    <div class="info-feat"><span class="icon">📄</span> Sample HR policy</div>
-    <div class="info-feat"><span class="icon">📁</span> Upload PDF, DOCX &amp; more</div>
-    <div class="info-feat"><span class="icon">✏️</span> Paste text</div>
+    <div class="info-feat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span class="feat-label">HR &amp; Operations</span>
+    </div>
+    <div class="info-feat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+      <span class="feat-label">Legal &amp; Compliance</span>
+    </div>
+    <div class="info-feat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><path d="M7 10l3 3 7-7"/></svg>
+      <span class="feat-label">InfoSec &amp; IT Support</span>
+    </div>
+    <div class="info-feat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      <span class="feat-label">Financial Analysis</span>
+    </div>
   </div>
 </div>
 
@@ -288,7 +338,25 @@ body{
   <span id="status-text">Initializing...</span>
 </div>
 
-<div class="disclaimer">&#9888; Content you upload or paste may be used for model training and fine-tuning.</div>
+<!-- ─── How To Section ─── -->
+<div class="howto" id="howto">
+  <div class="howto-header" onclick="toggleHowto()" id="howto-header">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    How to Use This Demo
+  </div>
+  <div class="howto-body" id="howto-body">
+    <ol>
+      <li><strong>Start a session</strong> &mdash; A new session is created automatically when you load the page.</li>
+      <li><strong>Load a document</strong> &mdash; Upload a file (PDF, DOCX, TXT, etc.), paste text, or use the pre-loaded sample HR policy.</li>
+      <li><strong>Ask questions</strong> &mdash; Type your question in the input bar and press Enter or click Send. Answers come strictly from the loaded document.</li>
+      <li><strong>Start fresh</strong> &mdash; Click <em>New Chat</em> to reset the session and clear the indexed document.</li>
+    </ol>
+    <div class="howto-disclaimer">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span>Content you upload or paste may be used for model training and fine-tuning.</span>
+    </div>
+  </div>
+</div>
 
 <!-- ─── Mode Bar ─── -->
 <div class="mode-bar">
@@ -318,7 +386,7 @@ body{
 <div class="chat-area" id="chat-area">
   <div class="chat-empty" id="chat-empty">
     <div class="icon">💬</div>
-    <div>Ask questions about the HR policy, or upload/paste a document above.</div>
+    <div>Securely query your documents. Upload a file, paste text, or use the pre-loaded sample to ask questions about HR policies, contracts, or any internal documentation.</div>
   </div>
 </div>
 
@@ -553,6 +621,13 @@ async function restart() {
 document.getElementById('question-input').addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendQuestion(); }
 });
+
+function toggleHowto() {
+  const body = document.getElementById('howto-body');
+  const header = document.getElementById('howto-header');
+  body.classList.toggle('open');
+  header.classList.toggle('open');
+}
 
 function toggleTheme() {
   const html = document.documentElement;

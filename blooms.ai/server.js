@@ -173,7 +173,7 @@ http.createServer(async (req, res) => {
     const referrers = {};
     entries.forEach(e => {
       if (e.u) { const p = e.u.split('?')[0].split('#')[0]; pages[p] = (pages[p] || 0) + 1; }
-      if (e.r) { try { const host = new URL(e.r).hostname; if (host && !host.includes('106.51.105.16') && !host.includes('localhost')) referrers[host] = (referrers[host] || 0) + 1; } catch {} }
+      if (e.r) { try { const host = new URL(e.r).hostname; if (host && !host.includes('124.123.88.71') && !host.includes('localhost')) referrers[host] = (referrers[host] || 0) + 1; } catch {} }
     });
     const sortedPages = Object.entries(pages).sort((a, b) => b[1] - a[1]).slice(0, 20);
     const sortedRefs = Object.entries(referrers).sort((a, b) => b[1] - a[1]).slice(0, 10);

@@ -16,13 +16,25 @@ apps:
   - name: faq_chatbot
     label: FAQ Chatbot
     url: http://host.docker.internal:5050
-    models: [qwen3.5:4b]
+    models: [qwen3.5:4b, llama3.2:3b, gemma4:12b]
     description: "RAG chatbot answering questions from an HR policy document."
     metric_weights:
       response_speed: 1.0
       hallucination: 1.5
       bias: 0.5
       factual_accuracy: 2.0
+      context_adherence: 2.0
+
+  - name: i_extract
+    label: i_extract
+    url: http://host.docker.internal:5053
+    models: [qwen3.5:4b, llama3.2:3b, gemma4:12b]
+    description: "Document data extraction app extracting key-value pairs from PDFs and images."
+    metric_weights:
+      response_speed: 1.0
+      hallucination: 2.0
+      bias: 0.3
+      factual_accuracy: 2.5
       context_adherence: 2.0
 
 benchmark:
