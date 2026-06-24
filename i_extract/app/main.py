@@ -6,7 +6,7 @@ import json
 import uuid
 from flask import Flask, request, jsonify, render_template, session, send_file, stream_with_context, Response
 from app.document_processor import load_pdf, load_image, get_text, render_document_html, normalize_text, supported_extensions, SUPPORTED_DOCS, SUPPORTED_IMAGES
-from app.extractor import extract_pairs, extract_indic_pairs, check_extractable, extract_text_from_image, validate_extraction, load_prompts, is_indic_text, _count_kv_patterns
+from app.extractor import extract_pairs, extract_indic_pairs, check_extractable, extract_text_from_image, validate_extraction, load_prompts, is_indic_text, _count_kv_patterns, detect_document_language
 from app.learning_store import LearningStore
 import yaml
 
@@ -76,25 +76,27 @@ def upload():
             yield _emit({'stage': 'parsing', 'message': 'Parsing document...'})
 
             if ext in SUPPORTED_DOCS:
-                yield _emit({'stage': 'parsing', 'message': f'Feeding PDF to {OLLAMA_MODEL}...'})
+                yield _emit({'stage': 'parsing', 'message': 'Running Surya OCR on document pages...'})
                 pages = load_pdf(save_path)
                 document_text = get_text(pages)
             elif ext in SUPPORTED_IMAGES:
-                yield _emit({'stage': 'parsing', 'message': f'Scanning image with {VISION_MODEL}...'})
                 pages = load_image(save_path)
-                image_text, img_err = extract_text_from_image(OLLAMA_HOST, VISION_MODEL, save_path, CONFIG)
-                if img_err:
-                    document_text = ''
-                else:
-                    document_text = image_text
-                if pages and pages[0].get('image_path'):
-                    pages[0]['text'] = document_text
+                document_text = get_text(pages)
+                if not document_text.strip():
+                    yield _emit({'stage': 'parsing', 'message': f'Scanning image with {VISION_MODEL}...'})
+                    image_text, img_err = extract_text_from_image(OLLAMA_HOST, VISION_MODEL, save_path, CONFIG)
+                    document_text = image_text if not img_err else ''
+                    if pages and pages[0].get('image_path'):
+                        pages[0]['text'] = document_text
             else:
                 yield _emit({'stage': 'error', 'message': 'Unsupported file type.'})
                 return
 
             raw_text = document_text
             document_text = normalize_text(document_text)
+
+            lang_info = detect_document_language(document_text)
+            yield _emit({'stage': 'language_detected', 'language': lang_info['language'], 'confidence': lang_info['confidence']})
 
             if not document_text.strip():
                 doc_html = render_document_html(pages)

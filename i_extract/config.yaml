@@ -26,6 +26,22 @@ learning:
   similarity_top_k: 3
   store_path: /app/knowledge/samples
 
+surya:
+  enabled: true
+  languages:
+    - hi
+    - ta
+    - te
+    - bn
+    - mr
+    - gu
+    - kn
+    - ml
+    - pa
+    - or
+    - si
+    - en
+
 extraction:
   min_confidence: 0.3
   max_pairs: 50

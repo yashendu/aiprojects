@@ -18,6 +18,68 @@ INDIC_UNICODE_RANGES = [
     (0x0D80, 0x0DFF),  # Sinhala
 ]
 
+LANG_SCRIPT_RANGES = [
+    ('English', [(0x0041, 0x005A), (0x0061, 0x007A), (0x00C0, 0x024F)]),
+    ('Hindi', [(0x0900, 0x097F)]),
+    ('Bengali', [(0x0980, 0x09FF)]),
+    ('Punjabi', [(0x0A00, 0x0A7F)]),
+    ('Gujarati', [(0x0A80, 0x0AFF)]),
+    ('Odia', [(0x0B00, 0x0B7F)]),
+    ('Tamil', [(0x0B80, 0x0BFF)]),
+    ('Telugu', [(0x0C00, 0x0C7F)]),
+    ('Kannada', [(0x0C80, 0x0CFF)]),
+    ('Malayalam', [(0x0D00, 0x0D7F)]),
+    ('Sinhala', [(0x0D80, 0x0DFF)]),
+    ('Thai', [(0x0E00, 0x0E7F)]),
+    ('Arabic', [(0x0600, 0x06FF), (0x0750, 0x077F), (0x08A0, 0x08FF)]),
+    ('Russian', [(0x0400, 0x04FF), (0x0500, 0x052F)]),
+    ('CJK', [(0x4E00, 0x9FFF), (0x3400, 0x4DBF)]),
+]
+
+_SKIP_CATEGORIES = {
+    'whitespace': set(range(0x0009, 0x000E)) | {0x0020, 0x00A0, 0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006, 0x2007, 0x2008, 0x2009, 0x200A, 0x2028, 0x2029, 0x202F, 0x3000},
+    'digits': set(range(0x0030, 0x003A)),
+    'punctuation': set(range(0x0021, 0x0030)) | set(range(0x003A, 0x0041)) | set(range(0x005B, 0x0061)) | set(range(0x007B, 0x007F)) | {0x00A1, 0x00A6, 0x00A7, 0x00AA, 0x00AB, 0x00B0, 0x00B1, 0x00B6, 0x00B7, 0x00BB, 0x00BF, 0x00D7, 0x00F7},
+}
+
+_SKIP_CHARS = set()
+for _cat in _SKIP_CATEGORIES.values():
+    _SKIP_CHARS |= _cat
+
+
+def _count_scripts(text):
+    counts = {}
+    for char in text:
+        cp = ord(char)
+        if cp in _SKIP_CHARS:
+            continue
+        for lang, ranges in LANG_SCRIPT_RANGES:
+            for start, end in ranges:
+                if start <= cp <= end:
+                    counts[lang] = counts.get(lang, 0) + 1
+                    break
+            else:
+                continue
+            break
+    return counts
+
+
+def detect_document_language(text):
+    if not text or not text.strip():
+        return {'language': 'English', 'confidence': 1.0}
+    scripts = _count_scripts(text)
+    if not scripts:
+        return {'language': 'English', 'confidence': 1.0}
+    total = sum(scripts.values())
+    if total == 0:
+        return {'language': 'English', 'confidence': 1.0}
+    dominant = max(scripts.items(), key=lambda x: x[1])
+    lang_name, count = dominant
+    ratio = count / total
+    if ratio > 0.5:
+        return {'language': lang_name, 'confidence': round(ratio, 2)}
+    return {'language': 'Multi-language', 'confidence': round(ratio, 2)}
+
 
 def load_prompts():
     with open(PROMPTS_PATH) as f:

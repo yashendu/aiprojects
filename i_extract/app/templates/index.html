@@ -64,6 +64,10 @@ body{
 .status-bar.ready .dot{background:var(--success);}
 .status-bar.busy .dot{background:var(--warning);animation:pulse 1s infinite;}
 .status-bar.error .dot{background:var(--danger);}
+.lang-badge{
+  font-size:.7rem;font-weight:600;padding:2px 8px;border-radius:10px;
+  background:var(--accent-light);color:var(--accent);border:1px solid var(--border);white-space:nowrap;
+}
 @keyframes pulse{0%,100%{opacity:.4;}50%{opacity:1;}}
 
 .upload-bar{
@@ -246,11 +250,11 @@ body{
 
 <!-- How To -->
 <div class="howto" id="howto">
-  <div class="howto-header" onclick="toggleHowto()" id="howto-header">
+  <div class="howto-header open" onclick="toggleHowto()" id="howto-header">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
     How to Use This Demo
   </div>
-  <div class="howto-body" id="howto-body">
+  <div class="howto-body open" id="howto-body">
     <ol>
       <li><strong>Upload a document</strong> &mdash; Select a PDF or JPEG file and click <em>Extract Data</em>.</li>
       <li><strong>Review the results</strong> &mdash; Extracted key-value pairs appear in the right pane. Labels and values are editable inline.</li>
@@ -267,6 +271,7 @@ body{
 <div class="status-bar ready" id="status-bar">
   <span class="dot"></span>
   <span id="status-text">Ready</span>
+  <span id="lang-badge" class="lang-badge" style="display:none;margin-left:auto;"></span>
 </div>
 
 <div class="upload-bar">
@@ -346,6 +351,7 @@ async function uploadFile() {
   hideMessage();
   setStatus('Initiating...', 'busy');
   document.getElementById('btn-extract').disabled = true;
+  document.getElementById('lang-badge').style.display = 'none';
 
   const fd = new FormData();
   fd.append('file', input.files[0]);
@@ -367,6 +373,10 @@ async function uploadFile() {
           const ev = JSON.parse(line);
           if (ev.stage === 'complete' || ev.stage === 'error') {
             finalData = ev;
+          } else if (ev.stage === 'language_detected') {
+            const badge = document.getElementById('lang-badge');
+            badge.textContent = '\uD83C\uDF10 ' + ev.language + (ev.confidence ? ' (' + (ev.confidence * 100).toFixed(0) + '%)' : '');
+            badge.style.display = '';
           } else if (ev.message) {
             setStatus(ev.message, 'busy');
           }

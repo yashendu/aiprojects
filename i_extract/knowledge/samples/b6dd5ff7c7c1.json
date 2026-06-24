@@ -1,0 +1,81 @@
+{
+  "id": "b6dd5ff7c7c1",
+  "filename": "test_vacancy.jpeg",
+  "document_text": "E dails?-www.sssc.uk.gov.in E-mail:chayanayog@gmail.com 7206 fasiniyot f15:06.2026 | | | 230 | |----|---------|-------| | | (hhh)h1 | 29 | | 2 | | 128 | | 3 | | 11 | | 4 | | 398 | 7261.0.26 w.ck.g FNo.952099172Whpo 95209911743Emalid:chayanyog@gmal.com | 152026 | |----------| | 222026 | | 06.2026 | | 0810202 | | 233,2026 |",
+  "extracted_pairs": [
+    {
+      "label": "Email",
+      "value": "chayanayog@gmail.com"
+    },
+    {
+      "label": "Phone Number",
+      "value": "7206 fasiniyot"
+    },
+    {
+      "label": "Date of Birth",
+      "value": "f15:06.2026"
+    },
+    {
+      "label": "Address",
+      "value": "230 | |----|---------|-------|"
+    },
+    {
+      "label": "Phone Number (Alternative)",
+      "value": "(hhh)h1"
+    },
+    {
+      "label": "Age",
+      "value": "29"
+    },
+    {
+      "label": "Residence",
+      "value": "2"
+    },
+    {
+      "label": "Occupation",
+      "value": "128"
+    },
+    {
+      "label": "Nationality",
+      "value": "3"
+    },
+    {
+      "label": "Marital Status",
+      "value": "11"
+    },
+    {
+      "label": "Religion",
+      "value": "4"
+    },
+    {
+      "label": "Income",
+      "value": "398"
+    },
+    {
+      "label": "Address (Alternative)",
+      "value": "7261.0.26 w.ck.g FNo.952099172Whpo"
+    },
+    {
+      "label": "ID Number",
+      "value": "95209911743Emalid:chayanyog@gmal.com"
+    },
+    {
+      "label": "Date of Issue",
+      "value": "152026"
+    },
+    {
+      "label": "Address (Alternative)",
+      "value": "----------| | 222026 | | 06.2026 |"
+    },
+    {
+      "label": "Date of Expiration",
+      "value": "0810202"
+    },
+    {
+      "label": "Address (Alternative)",
+      "value": "233,2026"
+    }
+  ],
+  "model_used": "llama3.2:3b",
+  "pair_count": 18
+}

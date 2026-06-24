@@ -1,0 +1,21 @@
+{
+  "id": "57d6eacd8444",
+  "filename": "invoice.jpg",
+  "document_text": "000*0000000 (0) u eqT: fq-ich: R: :P \u25a1-2024-001 152024 TRR 0",
+  "extracted_pairs": [
+    {
+      "label": "Date",
+      "value": "2024-001"
+    },
+    {
+      "label": "Time",
+      "value": "152024"
+    },
+    {
+      "label": "Reference Number",
+      "value": "TRR 0"
+    }
+  ],
+  "model_used": "llama3.2:3b",
+  "pair_count": 3
+}

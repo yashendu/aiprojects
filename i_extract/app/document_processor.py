@@ -1,7 +1,9 @@
 import os
 import re
+import io
 import base64
 import json
+from PIL import Image
 
 SUPPORTED_DOCS = {'.pdf'}
 SUPPORTED_IMAGES = {'.jpg', '.jpeg'}
@@ -12,17 +14,65 @@ PDF_RENDER_DPI = 150
 try:
     from docling.document_converter import DocumentConverter
     HAS_DOCLING = True
-except ImportError:
+except (ImportError, RecursionError):
     HAS_DOCLING = False
+
+try:
+    from app.surya_ocr import ocr_image as _surya_ocr_image, ocr_images as _surya_ocr_images, HAS_SURYA
+except ImportError:
+    HAS_SURYA = False
+
+
+def _page_to_pil(page):
+    img_data = page.get('image_data', '')
+    if img_data and img_data.startswith('data:image/'):
+        b64 = img_data.split(',', 1)[1]
+        try:
+            img_bytes = base64.b64decode(b64)
+            return Image.open(io.BytesIO(img_bytes))
+        except Exception:
+            return None
+    img_path = page.get('image_path')
+    if img_path and os.path.exists(img_path):
+        try:
+            return Image.open(img_path)
+        except Exception:
+            return None
+    return None
+
+
+def _maybe_ocr_with_surya(pages, langs=None):
+    if not HAS_SURYA:
+        return
+    images = []
+    valid_indices = []
+    for i, page in enumerate(pages):
+        img = _page_to_pil(page)
+        if img is not None:
+            images.append(img)
+            valid_indices.append(i)
+    if not images:
+        return
+    try:
+        texts = _surya_ocr_images(images, langs=langs)
+        for idx, text in zip(valid_indices, texts):
+            if text and text.strip():
+                pages[idx]['text'] = text
+    except Exception:
+        pass
 
 
 def load_pdf(filepath):
     if HAS_DOCLING:
         try:
-            return _load_pdf_docling(filepath)
+            pages = _load_pdf_docling(filepath)
+            _maybe_ocr_with_surya(pages)
+            return pages
         except Exception:
             pass
-    return _load_pdf_pymupdf(filepath)
+    pages = _load_pdf_pymupdf(filepath)
+    _maybe_ocr_with_surya(pages)
+    return pages
 
 
 def load_image(filepath):
@@ -31,9 +81,15 @@ def load_image(filepath):
             return _load_image_docling(filepath)
         except Exception:
             pass
-    from PIL import Image
     img = Image.open(filepath)
     text = ''
+    if HAS_SURYA:
+        try:
+            ocr_text = _surya_ocr_image(filepath)
+            if ocr_text and ocr_text.strip():
+                text = ocr_text
+        except Exception:
+            pass
     return [{'page': 1, 'text': text, 'width': img.width, 'height': img.height, 'image_path': filepath}]
 
 
